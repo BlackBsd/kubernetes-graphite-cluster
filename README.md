@@ -17,20 +17,23 @@ Find the full details [here](https://medium.com/@erezrabih/creating-a-graphite-c
 4. Optional - Access to your own docker repository to store your own images. That's relevant if you don't want to use the default images offered here.
 
 ## Environment Variables:
-| Name                            | Default Value | Purpose                                                                                                                              | Can be changed? |
-|---------------------------------|---------------|--------------------------------------------------------------------------------------------------------------------------------------|-----------------|
-| DOCKER_REPOSITORY        | nanit         | Change it if you want to build and use custom docker repository. nanit images are public so leaving it as it is should work out of the box. | Yes             |
-| SUDO                            | sudo          | Should docker commands be prefixed with sudo. Change to "" to omit sudo.                                                             | Yes             |
-| STATSD_PROXY_REPLICAS           | None          | Number of replicas for statsd proxy                                                                                                  | Yes             |
-| STATSD_DAEMON_REPLICAS          | None          | Must be set to 2                                                                                                                     | No              |
-| CARBON_RELAY_REPLICAS           | None          | Number of replicas for carbon relay                                                                                                  | Yes             |
-| GRAPHITE_NODE_REPLICAS          | None          | Must be set to 5                                                                                                                     | No              |
-| GRAPHITE_NODE_CURATOR_RETENTION | None          | Set this variable to run a cronjob which deletes metrics that haven't been written for X days                                        | Yes             |
-| GRAPHITE_MASTER_REPLICAS        | None          | Number of replicas for graphite query node                                                                                           | Yes             |
+| Name                            | Default Value | Purpose                                                                                                                                     | Can be changed? |
+|---------------------------------|---------------|---------------------------------------------------------------------------------------------------------------------------------------------|-----------------|
+| DOCKER_REPOSITORY               | nanit         | Change it if you want to build and use custom docker repository. nanit images are public so leaving it as it is should work out of the box. | Yes             |
+| SUDO                            | sudo          | Should docker commands be prefixed with sudo. Change to "" to omit sudo.                                                                    | Yes             |
+| STATSD_PROXY_REPLICAS           | None          | Number of replicas for statsd proxy                                                                                                         | Yes             |
+| STATSD_DAEMON_REPLICAS          | None          | Must be set to 2                                                                                                                            | No              |
+| CARBON_RELAY_REPLICAS           | None          | Number of replicas for carbon relay                                                                                                         | Yes             |
+| GRAPHITE_NODE_REPLICAS          | None          | Must be set to 5                                                                                                                            | No              |
+| GRAPHITE_NODE_CURATOR_RETENTION | None          | Set this variable to run a cronjob which deletes metrics that haven't been written for X days                                               | Yes             |
+| GRAPHITE_MASTER_REPLICAS        | None          | Number of replicas for graphite query node                                                                                                  | Yes             |
 
 ## Deployment:
 1. Clone this repository
-2. Run:
+2. Make sure you are targeting the proper namespace to hold the cluster: I.E. `kubectl create namespace instrumentation`
+3. Edit storage class to match cluster / zones, etc: ([kube/graphite-node/storage-class.yaml](kube/graphite-node/storage-class.yaml))
+4. Create storage class in the namespace created above: `kubectl -n instrumentation create -f kube/graphite-node/storage-class.yaml`
+5. Deploy by Running:
 ```
 export DOCKER_REPOSITORY=nanit && \
 export STATSD_PROXY_REPLICAS=3 && \
@@ -42,6 +45,7 @@ export GRAPHITE_MASTER_REPLICAS=2 && \
 export SUDO="" && \
 make deploy
 ```
+
 ## Usage:
 After the deployment is done there are two endpoints of interest:
 
@@ -52,12 +56,39 @@ After the deployment is done there are two endpoints of interest:
 ## Verifying The Deployment:
 To verify everything works as expected:
 
-1. Enter an interactive shell session in one of the pods: `kubectl exec -it statsd-daemon-0 /bin/sh`
+1. Enter an interactive shell session in one of the pods: `kubectl -n instrumentation exec -it statsd-daemon-0 /bin/sh`
 2. run `echo "test_counter:1|c" | nc -w1 -u statsd 8125` a few times to get some data into Graphite
-3. Install curl `apk --update add curl`
+3. Install curl `apk --update add curl` and curl-dev `apk --update add curl-dev`
 4. Fetch data from Graphite: `curl 'graphite/render?target=stats.counters.test_counter.count&from=-10min&format=json'`
 
 You should see a lot of null values along with your few increments at the end.
+
+
+## UnDeploy
+
+In the event that you need to undeploy StatsD/Graphite, perform the following:
+
+**NOTE: Make sure your using the proper namespace.**
+
+1. UnDeploy by Running:
+```
+export DOCKER_REPOSITORY=nanit && \
+export STATSD_PROXY_REPLICAS=3 && \
+export STATSD_DAEMON_REPLICAS=2 && \
+export CARBON_RELAY_REPLICAS=3 && \
+export GRAPHITE_NODE_REPLICAS=5 && \
+export GRAPHITE_NODE_CURATOR_RETENTION=14 && \
+export GRAPHITE_MASTER_REPLICAS=2 && \
+export SUDO="" && \
+make undeploy
+```
+2. Remove the storage class that was created: `kubectl -n instrumentation delete -f kube/graphite-node/storage-class.yaml`
+
+
+## Verifying The UnDeployment:
+
+Needs Documentation to verify that the undeployment worked.
+
 
 ## Building your own images
 If you want to build use your own images make sure to change the DOCKER_REPOSITORY environment variable to your own docker repository.

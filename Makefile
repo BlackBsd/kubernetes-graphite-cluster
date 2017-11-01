@@ -17,6 +17,9 @@ define generate-statsd-proxy-dep
 	sed -e 's/{{APP_NAME}}/$(STATSD_PROXY_APP_NAME)/g;s,{{IMAGE_NAME}},$(STATSD_PROXY_IMAGE_NAME),g;s/{{REPLICAS}}/$(STATSD_PROXY_REPLICAS)/g' kube/$(STATSD_PROXY_DIR_NAME)/dep.yml
 endef
 
+undeploy-statsd-proxy:
+	$(call generate-statsd-proxy-dep) | kubectl delete -f - && $(call generate-statsd-proxy-svc) | kubectl delete -f -
+
 deploy-statsd-proxy: docker-statsd-proxy
 	kubectl get svc $(STATSD_PROXY_APP_NAME) || $(call generate-statsd-proxy-svc) | kubectl create -f -
 	$(call generate-statsd-proxy-dep) | kubectl apply -f -
@@ -41,6 +44,9 @@ define generate-statsd-daemon-dep
 	sed -e 's/{{APP_NAME}}/$(STATSD_DAEMON_APP_NAME)/g;s,{{IMAGE_NAME}},$(STATSD_DAEMON_IMAGE_NAME),g;s/{{REPLICAS}}/$(STATSD_DAEMON_REPLICAS)/g' kube/$(STATSD_DAEMON_DIR_NAME)/stateful.set.yml
 endef
 
+undeploy-statsd-daemon:
+	$(call generate-statsd-daemon-dep) | kubectl delete -f - && $(call generate-statsd-daemon-svc) | kubectl delete -f -
+
 deploy-statsd-daemon: docker-statsd-daemon
 	kubectl get svc $(STATSD_DAEMON_APP_NAME) || $(call generate-statsd-daemon-svc) | kubectl create -f -
 	$(call generate-statsd-daemon-dep) | kubectl apply -f -
@@ -64,6 +70,9 @@ define generate-carbon-relay-dep
 	if [ -z "$(CARBON_RELAY_REPLICAS)" ]; then echo "ERROR: CARBON_RELAY_REPLICAS is empty!"; exit 1; fi
 	sed -e 's/{{APP_NAME}}/$(CARBON_RELAY_APP_NAME)/g;s,{{IMAGE_NAME}},$(CARBON_RELAY_IMAGE_NAME),g;s/{{REPLICAS}}/$(CARBON_RELAY_REPLICAS)/g' kube/$(CARBON_RELAY_DIR_NAME)/dep.yml
 endef
+
+undeploy-carbon-relay:
+	$(call generate-carbon-relay-dep) | kubectl delete -f - && $(call generate-carbon-relay-svc) | kubectl delete -f -
 
 deploy-carbon-relay: docker-carbon-relay
 	kubectl get svc $(CARBON_RELAY_APP_NAME) || $(call generate-carbon-relay-svc) | kubectl create -f -
@@ -90,6 +99,9 @@ define generate-graphite-node-dep
 	sed -e 's/{{APP_NAME}}/$(GRAPHITE_NODE_APP_NAME)/g;s,{{IMAGE_NAME}},$(GRAPHITE_NODE_IMAGE_NAME),g;s/{{REPLICAS}}/$(GRAPHITE_NODE_REPLICAS)/g;s/{{CURATOR_RETENTION}}/$(GRAPHITE_NODE_CURATOR_RETENTION)/g' kube/$(GRAPHITE_NODE_DIR_NAME)/stateful.set.yml
 endef
 
+undeploy-graphite-node:
+	$(call generate-graphite-node-dep) | kubectl delete -f - && $(call generate-graphite-node-svc) | kubectl delete -f -
+
 deploy-graphite-node: docker-graphite-node
 	kubectl get svc $(GRAPHITE_NODE_APP_NAME) || $(call generate-graphite-node-svc) | kubectl create -f -
 	$(call generate-graphite-node-dep) | kubectl apply -f -
@@ -114,6 +126,9 @@ define generate-graphite-master-dep
 	sed -e 's/{{APP_NAME}}/$(GRAPHITE_MASTER_APP_NAME)/g;s,{{IMAGE_NAME}},$(GRAPHITE_MASTER_IMAGE_NAME),g;s/{{REPLICAS}}/$(GRAPHITE_MASTER_REPLICAS)/g' kube/$(GRAPHITE_MASTER_DIR_NAME)/dep.yml
 endef
 
+undeploy-graphite-master:
+	$(call generate-graphite-master-dep) | kubectl delete -f - && $(call generate-graphite-master-svc) | kubectl delete -f -
+
 deploy-graphite-master: docker-graphite-master
 	kubectl get svc $(GRAPHITE_MASTER_APP_NAME) || $(call generate-graphite-master-svc) | kubectl create -f -
 	$(call generate-graphite-master-dep) | kubectl apply -f -
@@ -123,3 +138,5 @@ docker-graphite-master:
 
 
 deploy: deploy-statsd-proxy deploy-statsd-daemon deploy-carbon-relay deploy-graphite-node deploy-graphite-master
+
+undeploy: undeploy-graphite-master undeploy-graphite-node undeploy-carbon-relay undeploy-statsd-daemon undeploy-statsd-proxy
