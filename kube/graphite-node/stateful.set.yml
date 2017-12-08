@@ -31,7 +31,7 @@ spec:
   - metadata:
       name: graphite-node-pv
       annotations:
-        volume.beta.kubernetes.io/storage-class: default
+        volume.beta.kubernetes.io/storage-class: graphite
     spec:
       accessModes: [ "ReadWriteOnce" ]
       resources:
