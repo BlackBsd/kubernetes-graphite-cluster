@@ -31,9 +31,8 @@ Find the full details [here](https://medium.com/@erezrabih/creating-a-graphite-c
 ## Deployment:
 1. Clone this repository
 2. Make sure you are targeting the proper namespace to hold the cluster: I.E. `kubectl create namespace instrumentation`
-3. Edit storage class to match cluster / zones, etc: ([kube/graphite-node/storage-class.yaml](kube/graphite-node/storage-class.yaml))
-4. Create storage class in the namespace created above: `kubectl -n instrumentation create -f kube/graphite-node/storage-class.yaml`
-5. Deploy by Running:
+3. Create storage class in the namespace created above: `kubectl -n instrumentation create -f kube/graphite-node/storage-class.yaml`
+4. Deploy by Running:
 ```
 export DOCKER_REPOSITORY=nanit && \
 export STATSD_PROXY_REPLICAS=3 && \
