@@ -56,7 +56,7 @@ After the deployment is done there are two endpoints of interest:
 To verify everything works as expected:
 
 1. Enter an interactive shell session in one of the pods: `kubectl -n instrumentation exec -it statsd-daemon-0 /bin/sh`
-2. run `echo "test_counter:1|c" | nc -w1 -u statsd 8125` a few times to get some data into Graphite
+2. Run `for i in 0 1 2 3 4 5 6 7 8 9; do echo "test_counter:1|c" | nc -w1 -u statsd 8125; done` to get some data into Graphite.
 3. Install curl `apk --update add curl` and curl-dev `apk --update add curl-dev`
 4. Fetch data from Graphite: `curl 'graphite/render?target=stats.counters.test_counter.count&from=-10min&format=json'`
 
